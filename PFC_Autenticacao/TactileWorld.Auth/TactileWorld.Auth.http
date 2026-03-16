@@ -1,0 +1,6 @@
+@TactileWorld.Auth_HostAddress = http://localhost:5094
+
+GET {{TactileWorld.Auth_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

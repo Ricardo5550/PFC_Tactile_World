@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tactile World - Acesso</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #1a1a2e;
+                color: #ffffff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .login-box {
+                background-color: #16213e;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+                width: 320px;
+                text-align: center;
+            }
+            .login-box h2 {
+                margin-top: 0;
+                margin-bottom: 25px;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                color: #e94560;
+            }
+            input {
+                width: 90%;
+                padding: 12px;
+                margin: 10px 0;
+                border: none;
+                border-radius: 5px;
+                background-color: #0f3460;
+                color: white;
+                outline: none;
+                font-size: 14px;
+            }
+            input::placeholder {
+                color: #8c9eff;
+            }
+            button {
+                width: 100%;
+                padding: 12px;
+                margin-top: 20px;
+                background-color: #e94560;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                transition: background-color 0.3s;
+            }
+            button:hover {
+                background-color: #d13d56;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="login-box">
+            <h2>Tactile World</h2>
+            <input type="email" id="emailInput" placeholder="Digite seu E-mail" required>
+            <input type="password" id="senhaInput" placeholder="Digite sua Senha" required>
+            <button onclick="tentarLogin()">ENTRAR NO MUNDO</button>
+        </div>
+
+        <script>
+            async function tentarLogin() {
+                // 1. Pegar o texto que o usuário digitou nas caixas.
+                const emailDigitado = document.getElementById('emailInput').value;
+                const senhaDigitada = document.getElementById('senhaInput').value;
+
+                // 2. Montar o Pacote de Dados.
+                const pacoteDados = {
+                    Email: emailDigitado,
+                    Senha: senhaDigitada
+                };
+
+                try {
+                    // 3. Fetch.
+                    const resposta = await fetch('http://Localhost:5094/api/Auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(pacoteDados)
+                    });
+
+                    // 4. Lendo a resposta.
+                    if (resposta.ok) {
+                        const textoSucesso = await resposta.text();
+                        alert(" SUCESSO: " + textoSucesso);
+                    } else {
+                        const textoErro = await resposta.text();
+                        alert(" ERRO: " + textoErro);
+                    }
+                } catch (erro) {
+                    alert(" Falha grave na comunicação. ");
+                }
+            }
+        </script>
+    </body>
+</html>
