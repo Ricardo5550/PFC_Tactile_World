@@ -6,6 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 
 namespace TactileWorld.Auth.Controllers
 {
@@ -15,11 +16,13 @@ namespace TactileWorld.Auth.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        public AuthController(AppDbContext context, IConfiguration configuration, ILogger<AuthController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
 
         // Endpoint para registrar um novo usuário.
@@ -141,6 +144,67 @@ namespace TactileWorld.Auth.Controllers
                 Token = tokenJwt
             });
         }
+
+        [HttpPost("esqueci-senha")]
+        public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequest request)
+        {
+            // Registrar a solicitação.
+            _logger.LogInformation($"Solicitação de recuperação de senha iniciada para o e-mail: {request.Email}");
+            // 1. Buscar o usuário no Banco de Dados pelo Email.
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (usuario == null)
+            {
+                _logger.LogWarning($"Falha na solicitação: Usuário não encontrado para o e-mail: {request.Email}");
+                return BadRequest("Usuário não encontrado.");
+            }
+
+            // 2. Gerar um Token de segurança.
+            usuario.ResetToken = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+
+            // 3. Definir a validade do Token para expirar em uma hora.
+            usuario.ResetTokenExpires = DateTime.Now.AddHours(1);
+
+            // 4. Salvar o Token novo e a validade no Banco de Dados.
+            await _context.SaveChangesAsync();
+
+            // Devolver o Token para a Página Web.
+            return Ok(new
+            {
+                Mensagem = "Token de recuperação gerado com sucesso!",
+                Token = usuario.ResetToken
+            });
+        }
+
+        [HttpPost("redefinir-senha")]
+        public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequest request)
+        {
+            // 1. Buscar o usuário que tenha este Email e este Token exatos.
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email && u.ResetToken == request.Token);
+
+            // 2. Verificar se o usuário foi encontrado e se o Token ainda está dentro da validade.
+            if (usuario == null || usuario.ResetTokenExpires < DateTime.Now)
+            {
+                // Registrar.
+                _logger.LogWarning($"Falha na redefinição de senha: Token inválido ou expirado para o e-mail: {request.Email}");
+                return BadRequest("Token inválido ou expirado.");
+            }
+
+            // 3. Criptografar a nova senha.
+            usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+
+            // 4. Limpar o Token do Banco de Dados para ele não ser utilizado duas vezes.
+            usuario.ResetToken = null;
+            usuario.ResetTokenExpires = null;
+
+            // 5. Salvar a nova senha definitivamente no Banco de Dados.
+            await _context.SaveChangesAsync();
+
+            // Registrar.
+            _logger.LogInformation($"Sucesso: Senha redefinida com sucesso para o e-mail: {request.Email}");
+
+            return Ok(new { Mensagem = "Senha redefinida com sucesso! Você já pode fazer login com a nova senha." });
+        }
         private string GerarTokenJwt(Usuario usuario)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -193,5 +257,17 @@ namespace TactileWorld.Auth.Controllers
     {
         public string Email { get; set; } = string.Empty;
         public string Codigo { get; set; } = string.Empty;
+    }
+
+    public class EsqueciSenhaRequest
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class RedefinirSenhaRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+        public string NovaSenha { get; set; } = string.Empty;
     }
 }

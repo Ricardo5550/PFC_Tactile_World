@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Tactile World - Acesso</title>
+        <title>Tactile World - Recuperar Senha</title>
         <style>
             body {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -60,7 +60,7 @@
             button:hover {
                 background-color: #d13d56;
             }
-            .link-recuperar {
+            .link-voltar {
                 display: inline-block;
                 width: 100%;
                 background-color: #e94560;
@@ -74,13 +74,10 @@
                 text-transform: uppercase;
                 text-decoration: none;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-                transition: all 0.3s ease;
-                cursor: pointer;
-                border: none;
+                transition: color 0.3s ease;
                 box-sizing: border-box;
             }
-            /* Efeito Hover do Botão. */
-            .link-recuperar:hover {
+            .link-voltar:hover {
                 background-color: #d13d56;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.4);
                 transform: translateY(1px);
@@ -90,28 +87,29 @@
     </head>
     <body>
         <div class="login-box">
-            <h2>Tactile World</h2>
+            <h2>Recuperar Senha</h2>
             <input type="email" id="emailInput" placeholder="Digite seu E-mail" required>
-            <input type="password" id="senhaInput" placeholder="Digite sua Senha" required>
-            <button onclick="tentarLogin()">ENTRAR NO MUNDO</button>
-            <a href="esqueci-senha.html" class="link-recuperar">Esqueci minha senha</a>
+            <button onclick="enviarCodigo()">ENVIAR CÓDIGO</button>
+            <br>
+            <a href="index.html" class="link-voltar">Voltar para o Login</a>
         </div>
 
         <script>
-            async function tentarLogin() {
-                // 1. Pegar o texto que o usuário digitou nas caixas.
+            async function enviarCodigo() {
                 const emailDigitado = document.getElementById('emailInput').value;
-                const senhaDigitada = document.getElementById('senhaInput').value;
 
-                // 2. Montar o Pacote de Dados.
+                if (!emailDigitado) {
+                    alert("Por favor, digite o seu e-mail.");
+                    return;
+                }
+
                 const pacoteDados = {
-                    Email: emailDigitado,
-                    Senha: senhaDigitada
+                    email: emailDigitado
                 };
 
                 try {
-                    // 3. Fetch.
-                    const resposta = await fetch('http://Localhost:5094/api/Auth/login', {
+                    // Mandar o pedido para o C#.
+                    const resposta = await fetch('http://localhost:5094/api/Auth/esqueci-senha', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -119,16 +117,23 @@
                         body: JSON.stringify(pacoteDados)
                     });
 
-                    // 4. Lendo a resposta.
                     if (resposta.ok) {
-                        const textoSucesso = await resposta.text();
-                        alert(" SUCESSO: " + textoSucesso);
+                        const dados = await resposta.json();
+
+                        // Copiar o Token.
+                        await navigator.clipboard.writeText(dados.token);
+
+                        // Mostrar o aviso.
+                        alert("SUCESSO: " + dados.mensagem + "\n\nO seu Token já foi copiado! Basta apertar Ctrl+V na próxima Página Web.");
+
+                        // Mandar o usuário para a última Página Web.
+                        window.location.href = "redefinir-senha.html";
                     } else {
                         const textoErro = await resposta.text();
-                        alert(" ERRO: " + textoErro);
+                        alert("ERRO: " + textoErro);
                     }
                 } catch (erro) {
-                    alert(" Falha grave na comunicação. ");
+                    alert("Falha grave na comunicação com o servidor.");
                 }
             }
         </script>

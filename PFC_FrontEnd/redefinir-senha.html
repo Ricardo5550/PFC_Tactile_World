@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactile World - Nova Senha</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-box {
+            background-color: #16213e;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            width: 320px;
+            text-align: center;
+        }
+        .login-box h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #e94560;
+        }
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #0f3460;
+            color: white;
+            outline: none;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input::placeholder {
+            color: #8c9eff;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #d13d56;
+        }
+        .link-voltar {
+            display: inline-block;
+            width: 100%;
+            background-color: #e94560;
+            color: #ffffff;
+            padding: 12px 20px;
+            margin-top: 15px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .link-voltar:hover {
+            background-color: #d13d56;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            transform: translateY(1px);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>CRIAR NOVA SENHA</h2>
+        <input type="email" id="emailInput" placeholder="Digite seu E-mail" required>
+        <input type="text" id="tokenInput" placeholder="Cole o seu Token aqui" required>
+        <input type="password" id="novaSenhaInput" placeholder="Digite a Nova Senha" required>
+        
+        <button onclick="salvarNovaSenha()">REDEFINIR SENHA</button>
+        <br>
+        <a href="index.html" class="link-voltar">Voltar para o Login</a>
+    </div>
+
+    <script>
+        async function salvarNovaSenha() {
+            const emailDigitado = document.getElementById('emailInput').value;
+            const tokenDigitado = document.getElementById('tokenInput').value;
+            const novaSenhaDigitada = document.getElementById('novaSenhaInput').value;
+
+            if (!emailDigitado || !tokenDigitado || !novaSenhaDigitada) {
+                alert("Por favor, preencha todos os campos antes de continuar.");
+                return;
+            }
+
+            const pacoteDados = {
+                Email: emailDigitado,
+                Token: tokenDigitado,
+                NovaSenha: novaSenhaDigitada
+            };
+
+            try {
+                // Manda o pedido para a nossa rota final no C#
+                const resposta = await fetch('http://localhost:5094/api/Auth/redefinir-senha', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pacoteDados)
+                });
+
+                if (resposta.ok) {
+                    const dados = await resposta.json();
+                    alert("VITÓRIA: " + dados.mensagem);
+                    
+                    // Se deu certo, manda o usuário de volta para a tela inicial para fazer login
+                    window.location.href = "index.html";
+                } else {
+                    const textoErro = await resposta.text();
+                    alert("ERRO: " + textoErro);
+                }
+            } catch (erro) {
+                alert("Falha grave na comunicação com o servidor.");
+            }
+        }
+        </script>
+    </body>
+</html>
