@@ -94,12 +94,14 @@
             <input type="email" id="emailInput" placeholder="Digite seu E-mail" required>
             <input type="password" id="senhaInput" placeholder="Digite sua Senha" required>
             <button onclick="tentarLogin()">ENTRAR NO MUNDO</button>
-            <a href="esqueci-senha.html" class="link-recuperar">Esqueci minha senha</a>
+            <a href="esqueci-senha.html" class="link-recuperar">ESQUECI MINHA SENHA</a>
+            <a href="configurar-2fa.html" class="link-recuperar" style="margin-top: 10px;">ACESSAR POR DOIS FATORES</a>
+            <a href="validar-2fa.html" class="link-recuperar" style="margin-top: 10px;">JÁ TENHO 2FA (VALIDAR)</a>
         </div>
 
         <script>
             async function tentarLogin() {
-                // 1. Pegar o texto que o usuário digitou nas caixas.
+                // 1. Pegar o texto que o usuário digitou nos espaços.
                 const emailDigitado = document.getElementById('emailInput').value;
                 const senhaDigitada = document.getElementById('senhaInput').value;
 
@@ -111,7 +113,7 @@
 
                 try {
                     // 3. Fetch.
-                    const resposta = await fetch('http://Localhost:5094/api/Auth/login', {
+                    const resposta = await fetch('https://localhost:7094/api/Auth/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -119,7 +121,7 @@
                         body: JSON.stringify(pacoteDados)
                     });
 
-                    // 4. Lendo a resposta.
+                    // 4. Ler a resposta.
                     if (resposta.ok) {
                         const textoSucesso = await resposta.text();
                         alert(" SUCESSO: " + textoSucesso);

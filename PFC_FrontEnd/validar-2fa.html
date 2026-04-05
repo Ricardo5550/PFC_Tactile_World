@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactile World - Validar 2FA</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a2e; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background-color: #16213e; padding: 40px; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); width: 320px; text-align: center; }
+        .login-box h2 { margin-top: 0; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; color: #e94560; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: none; border-radius: 5px; background-color: #0f3460; color: white; outline: none; font-size: 14px; box-sizing: border-box; text-align: center; }
+        input::placeholder { color: #8c9eff; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.3s; }
+        button:hover { background-color: #d13d56; }
+        .link-voltar { display: inline-block; width: 100%; background-color: #e94560; color: #ffffff; padding: 12px 0; margin-top: 15px; text-align: center; border-radius: 5px; font-size: 16px; font-weight: bold; text-transform: uppercase; text-decoration: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.3s ease; box-sizing: border-box; }
+        .link-voltar:hover { background-color: #d13d56; }
+        
+        #codigoInput { font-size: 24px; letter-spacing: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>VALIDAR ACESSO</h2>
+        <input type="email" id="emailInput" placeholder="Digite seu E-mail" required>
+        <input type="text" id="codigoInput" placeholder="000000" maxlength="6" required>
+        
+        <button onclick="validarAcesso()">ENTRAR NO MUNDO</button>
+        <a href="index.html" class="link-voltar">Voltar para o Login</a>
+    </div>
+
+    <script>
+        async function validarAcesso() {
+            const emailDigitado = document.getElementById('emailInput').value;
+            const codigoDigitado = document.getElementById('codigoInput').value;
+
+            if (!emailDigitado || !codigoDigitado) {
+                alert("Preencha o e-mail e o código de 6 dígitos.");
+                return;
+            }
+
+            try {
+                const resposta = await fetch('https://localhost:7094/api/Auth/validar-2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        Email: emailDigitado,
+                        Codigo: codigoDigitado
+                    })
+                });
+
+                if (resposta.ok) {
+                    const dados = await resposta.json();
+                    // Copiar o Token para a área de transferência.
+                    await navigator.clipboard.writeText(dados.token);
+                    alert("SUCESSO: " + dados.mensagem);
+                } else {
+                    const textoErro = await resposta.text();
+                    alert("ERRO: " + textoErro);
+                }
+            } catch (erro) {
+                alert("Falha grave na comunicação com o servidor.");
+            }
+        }
+    </script>
+</body>
+</html>
