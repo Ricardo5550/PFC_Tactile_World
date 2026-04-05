@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TactileWorld.Auth.Data;
 using TactileWorld.Auth.Models;
+using TactileWorld.Auth.Services;
 using Google.Authenticator;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -17,6 +18,7 @@ namespace TactileWorld.Auth.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthController> _logger;
+        private readonly CriptografiaService _criptografiaService = new CriptografiaService();
 
         public AuthController(AppDbContext context, IConfiguration configuration, ILogger<AuthController> logger)
         {
@@ -86,15 +88,15 @@ namespace TactileWorld.Auth.Controllers
                 return BadRequest("Usuário não encontrado no Tactile World.");
             }
 
-            // 2. Criar uma chave secreta única e ateatória para o usuário.
-            string chaveSecreta = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10);
+            // 2. Criar uma chave única e ateatória para o usuário.
+            string chaveUnica = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10);
 
             // 3. Acionar o Autenticador para gerar os dados.
             TwoFactorAuthenticator tfa = new TwoFactorAuthenticator();
-            SetupCode setupInfo = tfa.GenerateSetupCode("Tactile World", usuario.Email, chaveSecreta, false, 3);
+            SetupCode setupInfo = tfa.GenerateSetupCode("Tactile World", usuario.Email, chaveUnica, false, 3);
 
             // 4. Salvar a chave secreta no Banco de Dados do usuário.
-            usuario.Secret2FA = chaveSecreta;
+            usuario.Secret2FA = _criptografiaService.Criptografar(chaveUnica); // Criptografar a chave única.
             _context.SaveChanges();
 
             // 5. Entregar as informações para o usuário cadastrar.
@@ -125,7 +127,8 @@ namespace TactileWorld.Auth.Controllers
 
             // 3. Conferir tudo.
             TwoFactorAuthenticator tfa = new TwoFactorAuthenticator();
-            bool codigoCorreto = tfa.ValidateTwoFactorPIN(usuario.Secret2FA, request.Codigo);
+            string chaveLimpa = _criptografiaService.Descriptografar(usuario.Secret2FA); // Descriptografar a chave única.
+            bool codigoCorreto = tfa.ValidateTwoFactorPIN(chaveLimpa, request.Codigo);
 
             if (!codigoCorreto)
             {
